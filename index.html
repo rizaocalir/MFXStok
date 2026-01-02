@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,28 +9,29 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MFXStok">
-    
+
     <title>MFXStok - Stok Takip Sistemi</title>
-    
+
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    
+
     <!-- Icons -->
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <!-- App Container -->
     <div id="app" class="app-container">
-        
+
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
@@ -74,13 +76,13 @@
 
         <!-- Main Content -->
         <main id="main-content" class="main-content">
-            
+
             <!-- Dashboard Page -->
             <div id="page-dashboard" class="page active">
                 <div class="page-header">
                     <h2>Stok Özeti</h2>
                 </div>
-                
+
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">📦</div>
@@ -89,7 +91,7 @@
                             <div class="stat-value" id="total-products">0</div>
                         </div>
                     </div>
-                    
+
                     <div class="stat-card">
                         <div class="stat-icon">🏢</div>
                         <div class="stat-info">
@@ -97,7 +99,7 @@
                             <div class="stat-value" id="warehouse1-stock">0</div>
                         </div>
                     </div>
-                    
+
                     <div class="stat-card">
                         <div class="stat-icon">🏭</div>
                         <div class="stat-info">
@@ -105,7 +107,7 @@
                             <div class="stat-value" id="warehouse2-stock">0</div>
                         </div>
                     </div>
-                    
+
                     <div class="stat-card">
                         <div class="stat-icon">💰</div>
                         <div class="stat-info">
@@ -134,7 +136,7 @@
                         <span>➕</span> Ürün Ekle
                     </button>
                 </div>
-                
+
                 <div class="search-bar">
                     <input type="text" id="product-search" placeholder="🔍 Ürün ara..." class="search-input">
                     <button id="scan-barcode-btn" class="btn btn-secondary">
@@ -194,15 +196,15 @@
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-label">Bugün</div>
-                            <div class="stat-value" id="today-sales">0₺</div>
+                            <div class="stat-value" id="today-sales">0€</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-label">Bu Hafta</div>
-                            <div class="stat-value" id="week-sales">0₺</div>
+                            <div class="stat-value" id="week-sales">0€</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-label">Bu Ay</div>
-                            <div class="stat-value" id="month-sales">0₺</div>
+                            <div class="stat-value" id="month-sales">0€</div>
                         </div>
                     </div>
                 </div>
@@ -245,7 +247,7 @@
                     <h3>Hakkında</h3>
                     <p class="about-text">
                         <strong>MFXStok v1.0</strong><br>
-                        Basit ve kullanışlı stok takip sistemi<br>
+                        Basit stok takip sistemi<br>
                         <small>© 2026 - Progressive Web App</small>
                     </p>
                 </div>
@@ -286,7 +288,7 @@
     <script src="barcode-scanner.js"></script>
     <script src="reports.js"></script>
     <script src="app.js"></script>
-    
+
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
@@ -298,4 +300,5 @@
         }
     </script>
 </body>
+
 </html>
