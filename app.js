@@ -421,6 +421,30 @@ async function saveTransaction() {
     }
 }
 
+async function deleteTransaction(transactionId) {
+    if (!confirm('Bu hareketi silmek istediğinizden emin misiniz? Stok sayısı otomatik olarak düzeltilecektir.')) {
+        return;
+    }
+
+    try {
+        await db.deleteTransaction(transactionId);
+        Toast.show('Hareket silindi ve stok güncellendi', 'success');
+
+        // Refresh views
+        loadTransactions();
+        loadDashboard();
+
+        // If we are on products page, refresh that too
+        if (AppState.currentPage === 'products') {
+            loadProducts();
+        }
+
+    } catch (error) {
+        console.error('Delete transaction error:', error);
+        Toast.show('Silme işlemi başarısız', 'error');
+    }
+}
+
 // ==========================================
 // Reports Functions
 // ==========================================

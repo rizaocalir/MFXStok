@@ -260,6 +260,10 @@ function createTransactionItem(transaction) {
                 <div style="font-size: 0.875rem; color: var(--text-secondary);">
                     ${transaction.quantity} adet
                 </div>
+                <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; margin-top: 0.5rem; font-size: 0.75rem;" 
+                        onclick="deleteTransaction(${transaction.id})">
+                    🗑️ Sil
+                </button>
             </div>
         </div>
     `;

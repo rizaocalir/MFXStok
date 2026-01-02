@@ -25,9 +25,9 @@ class DatabaseManager {
 
                 // Products Store
                 if (!db.objectStoreNames.contains('products')) {
-                    const productStore = db.createObjectStore('products', { 
-                        keyPath: 'id', 
-                        autoIncrement: true 
+                    const productStore = db.createObjectStore('products', {
+                        keyPath: 'id',
+                        autoIncrement: true
                     });
                     productStore.createIndex('barcode', 'barcode', { unique: false });
                     productStore.createIndex('name', 'name', { unique: false });
@@ -36,9 +36,9 @@ class DatabaseManager {
 
                 // Transactions Store
                 if (!db.objectStoreNames.contains('transactions')) {
-                    const transactionStore = db.createObjectStore('transactions', { 
-                        keyPath: 'id', 
-                        autoIncrement: true 
+                    const transactionStore = db.createObjectStore('transactions', {
+                        keyPath: 'id',
+                        autoIncrement: true
                     });
                     transactionStore.createIndex('productId', 'productId', { unique: false });
                     transactionStore.createIndex('type', 'type', { unique: false });
@@ -155,11 +155,28 @@ class DatabaseManager {
         const id = await this.add('transactions', transactionData);
 
         // Update product stock
-        const stockChange = transaction.type === 'entry' ? 
+        const stockChange = transaction.type === 'entry' ?
             transaction.quantity : -transaction.quantity;
         await this.updateProductStock(transaction.productId, stockChange);
 
         return id;
+    }
+
+    async deleteTransaction(transactionId) {
+        const transaction = await this.get('transactions', transactionId);
+        if (!transaction) return;
+
+        // Reverse the stock effect
+        // If it was an 'entry' (added stock), we need to remove it (-quantity)
+        // If it was an 'exit' (removed stock), we need to add it back (+quantity)
+        const reverseStockChange = transaction.type === 'entry' ?
+            -transaction.quantity : transaction.quantity;
+
+        // Update product stock
+        await this.updateProductStock(transaction.productId, reverseStockChange);
+
+        // Delete the transaction
+        return await this.delete('transactions', transactionId);
     }
 
     async getTransactionsByProduct(productId) {
@@ -269,20 +286,20 @@ class DatabaseManager {
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         const todaySales = transactions
             .filter(t => t.type === 'exit' && new Date(t.date) >= today)
             .reduce((sum, t) => sum + t.totalAmount, 0);
 
         const weekStart = new Date(today);
         weekStart.setDate(today.getDate() - today.getDay());
-        
+
         const weekSales = transactions
             .filter(t => t.type === 'exit' && new Date(t.date) >= weekStart)
             .reduce((sum, t) => sum + t.totalAmount, 0);
 
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        
+
         const monthSales = transactions
             .filter(t => t.type === 'exit' && new Date(t.date) >= monthStart)
             .reduce((sum, t) => sum + t.totalAmount, 0);
