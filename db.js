@@ -5,18 +5,19 @@
 // ⚠️ ÖNEMLİ: Kendi Firebase Config bilgilerinizi buraya yapıştırın!
 // Firebase Console -> Project Settings -> General -> Your apps -> SDK setup and configuration (CDN)
 const firebaseConfig = {
-    apiKey: "AIzaSy...", // BURAYI DOLDURUN
-    authDomain: "mfxstok-....firebaseapp.com", // BURAYI DOLDURUN
-    projectId: "mfxstok-...", // BURAYI DOLDURUN
-    storageBucket: "mfxstok-....appspot.com",
-    messagingSenderId: "...",
-    appId: "..."
+    apiKey: "AIzaSyCfKWJ5anQTig9FQiImYFfDw1pvps3rIe0",
+    authDomain: "mfxstok.firebaseapp.com",
+    projectId: "mfxstok",
+    storageBucket: "mfxstok.firebasestorage.app",
+    messagingSenderId: "559678186434",
+    appId: "1:559678186434:web:c2368b132b82f8e9c26c5b",
+    measurementId: "G-06Q96ZFP3G"
 };
 
 // Initialize Firebase
 let validConfig = false;
 try {
-    if (firebaseConfig.apiKey !== "AIzaSy...") {
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "AIzaSy...") {
         firebase.initializeApp(firebaseConfig);
         validConfig = true;
     } else {
