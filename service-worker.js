@@ -48,8 +48,11 @@ self.addEventListener('activate', (event) => {
 // Network First implementation
 // Try network -> if success, update cache and return -> if fail, return cache
 self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests or firebase requests
-    if (event.request.method !== 'GET' || event.request.url.includes('firestore') || event.request.url.includes('googleapis')) {
+    // Skip non-GET requests or firebase/extension requests
+    if (event.request.method !== 'GET' ||
+        event.request.url.includes('firestore') ||
+        event.request.url.includes('googleapis') ||
+        !event.request.url.startsWith('http')) {
         return;
     }
 
