@@ -12,16 +12,16 @@ class Reports {
             document.getElementById('warehouse1-stock').textContent = stats.warehouse1Stock;
             document.getElementById('warehouse2-stock').textContent = stats.warehouse2Stock;
             document.getElementById('pending-payments').textContent =
-                stats.pendingPayments.toLocaleString('tr-TR') + '₺';
+                stats.pendingPayments.toLocaleString('tr-TR') + '€';
 
             // Update sales stats on reports page
             if (document.getElementById('today-sales')) {
                 document.getElementById('today-sales').textContent =
-                    stats.todaySales.toLocaleString('tr-TR') + '₺';
+                    stats.todaySales.toLocaleString('tr-TR') + '€';
                 document.getElementById('week-sales').textContent =
-                    stats.weekSales.toLocaleString('tr-TR') + '₺';
+                    stats.weekSales.toLocaleString('tr-TR') + '€';
                 document.getElementById('month-sales').textContent =
-                    stats.monthSales.toLocaleString('tr-TR') + '₺';
+                    stats.monthSales.toLocaleString('tr-TR') + '€';
             }
 
         } catch (error) {
@@ -75,7 +75,7 @@ class Reports {
                             <div class="stat-info">
                                 <div class="stat-label">Ödenen</div>
                                 <div class="stat-value text-success">
-                                    ${paid.toLocaleString('tr-TR')}₺
+                                    ${paid.toLocaleString('tr-TR')}€
                                 </div>
                             </div>
                         </div>
@@ -85,7 +85,7 @@ class Reports {
                             <div class="stat-info">
                                 <div class="stat-label">Bekleyen</div>
                                 <div class="stat-value text-warning">
-                                    ${pending.toLocaleString('tr-TR')}₺
+                                    ${pending.toLocaleString('tr-TR')}€
                                 </div>
                             </div>
                         </div>
@@ -95,7 +95,7 @@ class Reports {
                             <div class="stat-info">
                                 <div class="stat-label">Kısmi</div>
                                 <div class="stat-value text-info">
-                                    ${partial.toLocaleString('tr-TR')}₺
+                                    ${partial.toLocaleString('tr-TR')}€
                                 </div>
                             </div>
                         </div>

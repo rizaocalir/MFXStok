@@ -255,7 +255,7 @@ function createTransactionItem(transaction) {
             </div>
             <div style="text-align: right;">
                 <div style="font-weight: 700; color: var(--text-primary);">
-                    ${transaction.totalAmount.toLocaleString('tr-TR')}₺
+                    ${transaction.totalAmount.toLocaleString('tr-TR')}€
                 </div>
                 <div style="font-size: 0.875rem; color: var(--text-secondary);">
                     ${transaction.quantity} adet
@@ -333,7 +333,7 @@ function showTransactionForm(productId = null) {
             </div>
             
             <div class="form-group">
-                <label class="form-label">Birim Fiyat (₺) *</label>
+                <label class="form-label">Birim Fiyat (€) *</label>
                 <input type="number" class="form-input" id="transaction-price" 
                        min="0" step="0.01" required>
             </div>
