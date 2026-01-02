@@ -178,42 +178,57 @@ class Modal {
 
 // Product Card Component
 function createProductCard(product) {
-    const stockStatus = product.stock > 10 ? 'success' :
+    // Determine stock status based on critical level
+    const criticalLevel = product.criticalStock || 5;
+    const stockStatus = product.stock > criticalLevel ? 'success' :
         product.stock > 0 ? 'warning' : 'danger';
 
+    // Status badges
+    const statusBadges = {
+        success: { text: 'Stokta', color: 'var(--success)' },
+        warning: { text: 'Kritik Düşük', color: 'var(--warning)' },
+        danger: { text: 'Tükendi', color: 'var(--danger)' }
+    };
+
+    const status = statusBadges[stockStatus];
+    const costDisplay = product.costPrice ?
+        `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">Maliyet: ${product.costPrice}€</div>` : '';
+
     return `
-        <div class="product-card" onclick="viewProduct(${product.id})">
+        <div class="product-card" onclick="viewProduct('${product.id}')" style="border-left: 4px solid ${status.color};">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                 <div>
                     <h3 style="margin: 0; font-size: 1.125rem; color: var(--text-primary);">
                         ${product.name}
                     </h3>
                     ${product.barcode ? `
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--text-tertiary);">
-                            🏷️ ${product.barcode}
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--text-secondary); font-family: monospace;">
+                            ${product.barcode}
                         </p>
                     ` : ''}
+                    ${costDisplay}
                 </div>
-                <span class="text-${stockStatus}" style="font-size: 1.5rem; font-weight: 700;">
-                    ${product.stock || 0}
-                </span>
+                <div class="stock-badge ${stockStatus}" style="background: ${status.color}20; color: ${status.color}; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                    ${status.text}
+                </div>
             </div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 0.875rem; color: var(--text-secondary);">
-                    ${product.warehouse === 'warehouse1' ? '🏢 Depo 1' : '🏭 Depo 2'}
-                </span>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" 
-                            onclick="event.stopPropagation(); editProduct(${product.id})">
-                        ✏️
-                    </button>
-                    <button class="btn btn-danger" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" 
-                            onclick="event.stopPropagation(); deleteProduct(${product.id})">
-                        🗑️
-                    </button>
+            <div style="display: flex; justify-content: space-between; align-items: end;">
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-tertiary); display: block; margin-bottom: 0.25rem;">STOK ADEDİ</span>
+                    <span style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">${product.stock}</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 0.75rem; color: var(--text-tertiary); display: block; margin-bottom: 0.25rem;">DEPO</span>
+                    <span style="font-size: 0.875rem; color: var(--text-secondary);">
+                        ${product.warehouse === 'warehouse1' ? 'Depo 1' : 'Depo 2'}
+                    </span>
                 </div>
             </div>
+            <button class="btn btn-danger" style="width: 100%; margin-top: 1rem; padding: 0.5rem;" 
+                    onclick="event.stopPropagation(); deleteProduct('${product.id}')">
+                🗑️ Ürünü Sil
+            </button>
         </div>
     `;
 }
@@ -283,12 +298,28 @@ function showProductForm(product = null) {
             </div>
             
             <div class="form-group">
-                <label class="form-label">Barkod</label>
-                <input type="text" class="form-input" id="product-barcode" 
-                       value="${isEdit ? (product.barcode || '') : ''}"
-                       placeholder="Opsiyonel">
+                <label class="form-label">Barkod (İsteğe bağlı)</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" class="form-input" id="product-barcode" 
+                           value="${isEdit ? (product.barcode || '') : ''}"
+                           placeholder="Barkod okutun veya yazın">
+                    <button type="button" class="btn btn-secondary" onclick="startScanner('product-barcode')">📷</button>
+                </div>
             </div>
             
+            <div class="form-group">
+                <label class="form-label">Maliyet Fiyatı (€)</label>
+                <input type="number" class="form-input" id="product-cost" min="0" step="0.01" placeholder="0.00"
+                       value="${isEdit ? (product.cost || '') : ''}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Kritik Stok Seviyesi</label>
+                <input type="number" class="form-input" id="product-critical" min="1" placeholder="Örn: 5"
+                       value="${isEdit ? (product.criticalStock || 5) : 5}">
+                <small style="color: var(--text-secondary); font-size: 0.75rem;">Stok bu sayının altına düşerse uyarı verilir.</small>
+            </div>
+
             <div class="form-group">
                 <label class="form-label">Depo *</label>
                 <select class="form-select" id="product-warehouse" required>

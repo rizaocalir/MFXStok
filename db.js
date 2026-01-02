@@ -124,6 +124,8 @@ class DatabaseManager {
             name: product.name,
             barcode: product.barcode || null,
             warehouse: product.warehouse,
+            costPrice: Number(product.costPrice) || 0,
+            criticalStock: Number(product.criticalStock) || 5, // Default warning level
             stock: 0,
             createdAt: new Date().toISOString()
         };

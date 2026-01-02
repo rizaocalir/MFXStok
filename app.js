@@ -219,6 +219,8 @@ async function saveProduct(productId) {
         const name = document.getElementById('product-name').value.trim();
         const barcode = document.getElementById('product-barcode').value.trim();
         const warehouse = document.getElementById('product-warehouse').value;
+        const costPrice = parseFloat(document.getElementById('product-cost').value) || 0;
+        const criticalStock = parseInt(document.getElementById('product-critical').value) || 0;
 
         if (!name) {
             Toast.show('Ürün adı gerekli', 'warning');
