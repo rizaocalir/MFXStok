@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="MFXStok - Basit ve Kullanışlı Stok Takip Sistemi">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MFXStok">
+    
+    <title>MFXStok - Stok Takip Sistemi</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app" class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <span class="logo-icon">📦</span>
+                    MFXStok
+                </h1>
+                <div class="header-actions">
+                    <button id="theme-toggle" class="icon-btn" aria-label="Tema Değiştir">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    <button id="menu-toggle" class="icon-btn" aria-label="Menü">
+                        <span class="menu-icon">☰</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav id="nav-menu" class="nav-menu">
+            <button class="nav-item active" data-page="dashboard">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Özet</span>
+            </button>
+            <button class="nav-item" data-page="products">
+                <span class="nav-icon">📦</span>
+                <span class="nav-label">Ürünler</span>
+            </button>
+            <button class="nav-item" data-page="transactions">
+                <span class="nav-icon">📝</span>
+                <span class="nav-label">Hareketler</span>
+            </button>
+            <button class="nav-item" data-page="reports">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Raporlar</span>
+            </button>
+            <button class="nav-item" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Ayarlar</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-content" class="main-content">
+            
+            <!-- Dashboard Page -->
+            <div id="page-dashboard" class="page active">
+                <div class="page-header">
+                    <h2>Stok Özeti</h2>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Toplam Ürün</div>
+                            <div class="stat-value" id="total-products">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🏢</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Depo 1</div>
+                            <div class="stat-value" id="warehouse1-stock">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🏭</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Depo 2</div>
+                            <div class="stat-value" id="warehouse2-stock">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Bekleyen Ödeme</div>
+                            <div class="stat-value" id="pending-payments">0₺</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Son Hareketler</h3>
+                    <div id="recent-transactions" class="transaction-list">
+                        <div class="empty-state">
+                            <span class="empty-icon">📭</span>
+                            <p>Henüz hareket yok</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Page -->
+            <div id="page-products" class="page">
+                <div class="page-header">
+                    <h2>Ürünler</h2>
+                    <button id="add-product-btn" class="btn btn-primary">
+                        <span>➕</span> Ürün Ekle
+                    </button>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="product-search" placeholder="🔍 Ürün ara..." class="search-input">
+                    <button id="scan-barcode-btn" class="btn btn-secondary">
+                        <span>📷</span> Barkod Oku
+                    </button>
+                </div>
+
+                <div id="products-list" class="products-grid">
+                    <div class="empty-state">
+                        <span class="empty-icon">📦</span>
+                        <p>Henüz ürün yok</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('add-product-btn').click()">
+                            İlk Ürünü Ekle
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Page -->
+            <div id="page-transactions" class="page">
+                <div class="page-header">
+                    <h2>Hareketler</h2>
+                    <button id="add-transaction-btn" class="btn btn-primary">
+                        <span>➕</span> Hareket Ekle
+                    </button>
+                </div>
+
+                <div class="filter-bar">
+                    <select id="transaction-filter" class="filter-select">
+                        <option value="all">Tümü</option>
+                        <option value="entry">Giriş</option>
+                        <option value="exit">Çıkış</option>
+                    </select>
+                    <select id="warehouse-filter" class="filter-select">
+                        <option value="all">Tüm Depolar</option>
+                        <option value="warehouse1">Depo 1</option>
+                        <option value="warehouse2">Depo 2</option>
+                    </select>
+                </div>
+
+                <div id="transactions-list" class="transaction-list">
+                    <div class="empty-state">
+                        <span class="empty-icon">📝</span>
+                        <p>Henüz hareket yok</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Page -->
+            <div id="page-reports" class="page">
+                <div class="page-header">
+                    <h2>Raporlar</h2>
+                </div>
+
+                <div class="report-section">
+                    <h3>Satış Özeti</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Bugün</div>
+                            <div class="stat-value" id="today-sales">0₺</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Bu Hafta</div>
+                            <div class="stat-value" id="week-sales">0₺</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Bu Ay</div>
+                            <div class="stat-value" id="month-sales">0₺</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <h3>Ödeme Durumu</h3>
+                    <div id="payment-status" class="payment-status-grid"></div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="page-settings" class="page">
+                <div class="page-header">
+                    <h2>Ayarlar</h2>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Veri Yönetimi</h3>
+                    <button id="export-data-btn" class="btn btn-secondary full-width">
+                        <span>📥</span> Verileri Dışa Aktar (JSON)
+                    </button>
+                    <button id="import-data-btn" class="btn btn-secondary full-width">
+                        <span>📤</span> Verileri İçe Aktar
+                    </button>
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                </div>
+
+                <div class="settings-section">
+                    <h3>Uygulama</h3>
+                    <div class="setting-item">
+                        <span>Karanlık Mod</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="dark-mode-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Hakkında</h3>
+                    <p class="about-text">
+                        <strong>MFXStok v1.0</strong><br>
+                        Basit ve kullanışlı stok takip sistemi<br>
+                        <small>© 2026 - Progressive Web App</small>
+                    </p>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Floating Action Button -->
+        <button id="fab" class="fab" aria-label="Hızlı İşlem">
+            <span class="fab-icon">➕</span>
+        </button>
+
+    </div>
+
+    <!-- Modals will be injected here by JavaScript -->
+    <div id="modal-container"></div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Barcode Scanner Container -->
+    <div id="scanner-container" class="scanner-container hidden">
+        <div class="scanner-overlay">
+            <div class="scanner-header">
+                <h3>Barkod Okuyucu</h3>
+                <button id="close-scanner" class="btn-close">✕</button>
+            </div>
+            <div id="scanner-viewport" class="scanner-viewport"></div>
+            <div class="scanner-info">
+                <p>Barkodu kamera önüne getirin</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="db.js"></script>
+    <script src="components.js"></script>
+    <script src="barcode-scanner.js"></script>
+    <script src="reports.js"></script>
+    <script src="app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registered:', reg))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
