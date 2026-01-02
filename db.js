@@ -50,6 +50,39 @@ class DatabaseManager {
         }
 
         return true;
+        return true;
+    }
+
+    monitorConnection() {
+        const updateStatus = (isOnline) => {
+            const statusEl = document.getElementById('connection-status');
+            if (statusEl) {
+                if (isOnline) {
+                    statusEl.classList.remove('offline');
+                    statusEl.classList.add('online');
+                    statusEl.title = "Bağlı (Online)";
+                } else {
+                    statusEl.classList.remove('online');
+                    statusEl.classList.add('offline');
+                    statusEl.title = "Bağlantı Yok (Offline)";
+                }
+            }
+        };
+
+        // Network status (Browser)
+        window.addEventListener('online', () => updateStatus(true));
+        window.addEventListener('offline', () => updateStatus(false));
+
+        // Initial check
+        updateStatus(navigator.onLine);
+
+        // Firebase connection status (if available)
+        if (this.db) {
+            // Note: firestore .info/connected is a special path
+            // However, for basic web SDK, standard window online/offline is often enough
+            // But let's try to be more precise if possible, though .info/connected is for RTDB
+            // For Firestore, we rely mostly on navigator.onLine and error handling
+        }
     }
 
     // Generic Methods

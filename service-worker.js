@@ -2,7 +2,7 @@
 // MFXStok - Service Worker (Network First)
 // ==========================================
 
-const CACHE_NAME = 'mfxstok-v2-firebase'; // Incremented version
+const CACHE_NAME = 'mfxstok-v3-firebase'; // Incremented version
 const urlsToCache = [
     '/',
     '/index.html',
@@ -23,6 +23,12 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => cache.addAll(urlsToCache))
     );
+});
+
+self.addEventListener('message', (event) => {
+    if (event.data.action === 'skipWaiting') {
+        self.skipWaiting();
+    }
 });
 
 self.addEventListener('activate', (event) => {

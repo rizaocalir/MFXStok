@@ -13,8 +13,12 @@ const AppState = {
 async function initApp() {
     try {
         // Initialize database
-        await db.init();
-        console.log('Database initialized');
+        if (await db.init()) {
+            console.log('Database initialized');
+            db.monitorConnection(); // Start monitoring connection
+            // Load initial data
+            await loadDashboard();
+        }
 
         // Load theme preference
         const savedTheme = localStorage.getItem('theme') || 'light';
