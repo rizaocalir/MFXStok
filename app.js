@@ -367,13 +367,14 @@ async function loadTransactions() {
 
 async function saveTransaction() {
     try {
-        const productId = parseInt(document.getElementById('transaction-product').value);
+        const productId = document.getElementById('transaction-product').value;
         const type = document.getElementById('transaction-type').value;
         const quantity = parseInt(document.getElementById('transaction-quantity').value);
         const unitPrice = parseFloat(document.getElementById('transaction-price').value);
         const notes = document.getElementById('transaction-notes').value.trim();
 
-        if (!productId || !quantity || !unitPrice) {
+        // Validate required fields (allow unitPrice to be 0)
+        if (!productId || !quantity || isNaN(unitPrice)) {
             Toast.show('Lütfen tüm gerekli alanları doldurun', 'warning');
             return;
         }
