@@ -118,15 +118,35 @@ class DatabaseManager {
         await this.db.collection(collectionName).doc(id).delete();
     }
 
+    // Warehouse Methods
+    async getWarehouses() {
+        const snapshot = await this.db.collection('warehouses').get();
+        if (snapshot.empty) {
+            // Create defaults
+            await this.add('warehouses', { name: 'Merkez Depo' });
+            return await this.getWarehouses();
+        }
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    async addWarehouse(name) {
+        return await this.add('warehouses', { name });
+    }
+
+    async deleteWarehouse(id) {
+        await this.delete('warehouses', id);
+    }
+
     // Product Methods
     async addProduct(product) {
         const productData = {
             name: product.name,
             barcode: product.barcode || null,
-            warehouse: product.warehouse,
+            // Warehouse removed from product definition, now handled in transactions/stock
             costPrice: Number(product.costPrice) || 0,
-            criticalStock: Number(product.criticalStock) || 5, // Default warning level
-            stock: 0,
+            criticalStock: Number(product.criticalStock) || 5,
+            stock: {}, // Map: { warehouseId: quantity }
+            totalStock: 0,
             createdAt: new Date().toISOString()
         };
         return await this.add('products', productData);
@@ -144,18 +164,33 @@ class DatabaseManager {
         return null;
     }
 
-    async updateProductStock(productId, quantityChange) {
+    async updateProductStock(productId, quantityChange, warehouseId) {
         const productRef = this.db.collection('products').doc(productId);
 
-        // Transaction to ensure atomic update
         await this.db.runTransaction(async (transaction) => {
             const productDoc = await transaction.get(productRef);
-            if (!productDoc.exists) {
-                throw "Ürün bulunamadı!";
+            if (!productDoc.exists) throw "Ürün bulunamadı!";
+
+            const data = productDoc.data();
+            let currentStock = data.stock || {};
+
+            // Handle legacy data (if stock was a number)
+            if (typeof currentStock === 'number') {
+                currentStock = {};
             }
 
-            const newStock = (productDoc.data().stock || 0) + quantityChange;
-            transaction.update(productRef, { stock: newStock });
+            const oldQty = currentStock[warehouseId] || 0;
+            const newQty = oldQty + quantityChange;
+
+            currentStock[warehouseId] = newQty;
+
+            // Recalculate total
+            const totalStock = Object.values(currentStock).reduce((a, b) => a + b, 0);
+
+            transaction.update(productRef, {
+                stock: currentStock,
+                totalStock: totalStock
+            });
         });
     }
 
@@ -168,7 +203,7 @@ class DatabaseManager {
             quantity: transaction.quantity,
             unitPrice: transaction.unitPrice,
             totalAmount: transaction.quantity * transaction.unitPrice,
-            warehouse: transaction.warehouse,
+            warehouseId: transaction.warehouseId, // Specific warehouse
             location: transaction.location || null,
             paymentStatus: transaction.paymentStatus || 'pending',
             notes: transaction.notes || '',
@@ -177,11 +212,11 @@ class DatabaseManager {
 
         const id = await this.add('transactions', transactionData);
 
-        // Update product stock
+        // Update product stock in specific warehouse
         const stockChange = transaction.type === 'entry' ?
             transaction.quantity : -transaction.quantity;
 
-        await this.updateProductStock(transaction.productId, stockChange);
+        await this.updateProductStock(transaction.productId, stockChange, transaction.warehouseId);
 
         return id;
     }
@@ -195,7 +230,7 @@ class DatabaseManager {
         const reverseStockChange = transaction.type === 'entry' ?
             -transaction.quantity : transaction.quantity;
 
-        await this.updateProductStock(transaction.productId, reverseStockChange);
+        await this.updateProductStock(transaction.productId, reverseStockChange, transaction.warehouseId);
 
         // Delete record
         await this.delete('transactions', transactionId);

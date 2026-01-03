@@ -218,7 +218,7 @@ async function saveProduct(productId) {
     try {
         const name = document.getElementById('product-name').value.trim();
         const barcode = document.getElementById('product-barcode').value.trim();
-        const warehouse = document.getElementById('product-warehouse').value;
+        // Warehouse removed from product creation
         const costPrice = parseFloat(document.getElementById('product-cost').value) || 0;
         const criticalStock = parseInt(document.getElementById('product-critical').value) || 0;
 
@@ -232,12 +232,13 @@ async function saveProduct(productId) {
             const product = await db.get('products', productId);
             product.name = name;
             product.barcode = barcode || null;
-            product.warehouse = warehouse;
+            product.costPrice = costPrice;
+            product.criticalStock = criticalStock;
             await db.update('products', product);
             Toast.show('Ürün güncellendi', 'success');
         } else {
             // Add new product
-            await db.addProduct({ name, barcode, warehouse });
+            await db.addProduct({ name, barcode, costPrice, criticalStock });
             Toast.show('Ürün eklendi', 'success');
         }
 
@@ -281,21 +282,33 @@ async function viewProduct(productId) {
     try {
         const product = await db.get('products', productId);
         const transactions = await db.getTransactionsByProduct(productId);
+        const warehouses = await db.getWarehouses();
+
+        // Calculate breakdown for display if using new stock object
+        let stockBreakdown = '';
+        if (product.stock && typeof product.stock === 'object') {
+            const whMap = {};
+            warehouses.forEach(w => whMap[w.id] = w.name);
+
+            stockBreakdown = Object.entries(product.stock)
+                .map(([whId, qty]) => {
+                    const whName = whMap[whId] || 'Bilinmeyen Depo';
+                    return `<div><strong>${whName}:</strong> ${qty}</div>`;
+                }).join('');
+        }
 
         const content = `
             <div style="margin-bottom: 1.5rem;">
                 <h3 style="margin: 0 0 0.5rem 0;">${product.name}</h3>
                 ${product.barcode ? `<p style="margin: 0; color: var(--text-secondary);">🏷️ ${product.barcode}</p>` : ''}
-                <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary);">
-                    ${product.warehouse === 'warehouse1' ? '🏢 Depo 1' : '🏭 Depo 2'}
-                </p>
+                ${stockBreakdown ? `<div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">${stockBreakdown}</div>` : ''}
             </div>
             
             <div class="stat-card" style="margin-bottom: 1.5rem;">
                 <div class="stat-icon">📦</div>
                 <div class="stat-info">
-                    <div class="stat-label">Mevcut Stok</div>
-                    <div class="stat-value">${product.stock || 0}</div>
+                    <div class="stat-label">Toplam Stok</div>
+                    <div class="stat-value">${product.totalStock || product.stock || 0}</div>
                 </div>
             </div>
             
@@ -313,7 +326,7 @@ async function viewProduct(productId) {
             content,
             [
                 { text: 'Kapat', class: 'btn-secondary', onclick: 'Modal.close()' },
-                { text: 'Hareket Ekle', class: 'btn-primary', onclick: `Modal.close(); showTransactionForm(${productId})` }
+                { text: 'Hareket Ekle', class: 'btn-primary', onclick: `Modal.close(); showTransactionForm('${productId}')` }
             ]
         );
 
@@ -368,13 +381,14 @@ async function loadTransactions() {
 async function saveTransaction() {
     try {
         const productId = document.getElementById('transaction-product').value;
+        const warehouseId = document.getElementById('transaction-warehouse').value;
         const type = document.getElementById('transaction-type').value;
         const quantity = parseInt(document.getElementById('transaction-quantity').value);
         const unitPrice = parseFloat(document.getElementById('transaction-price').value);
         const notes = document.getElementById('transaction-notes').value.trim();
 
         // Validate required fields (allow unitPrice to be 0)
-        if (!productId || !quantity || isNaN(unitPrice)) {
+        if (!productId || !warehouseId || !quantity || isNaN(unitPrice)) {
             Toast.show('Lütfen tüm gerekli alanları doldurun', 'warning');
             return;
         }
@@ -388,9 +402,12 @@ async function saveTransaction() {
         }
 
         // Check stock for exits
-        if (type === 'exit' && product.stock < quantity) {
-            if (!confirm(`Stok yetersiz! Mevcut: ${product.stock}, İstenen: ${quantity}. Devam edilsin mi?`)) {
-                return;
+        if (type === 'exit') {
+            const currentStock = (product.stock && product.stock[warehouseId]) || 0;
+            if (currentStock < quantity) {
+                if (!confirm(`Bu depoda stok yetersiz! Mevcut: ${currentStock}, İstenen: ${quantity}. Devam edilsin mi?`)) {
+                    return;
+                }
             }
         }
 
@@ -400,7 +417,7 @@ async function saveTransaction() {
             type,
             quantity,
             unitPrice,
-            warehouse: product.warehouse,
+            warehouseId, // New field
             notes
         };
 
@@ -462,11 +479,70 @@ async function loadReports() {
 }
 
 // ==========================================
+// Settings & Warehouse Functions
+// ==========================================
+
+async function loadWarehousesSettings() {
+    const list = document.getElementById('warehouses-list');
+    if (!list) return;
+
+    try {
+        const warehouses = await db.getWarehouses();
+        list.innerHTML = warehouses.map(wh => `
+            <div class="transaction-item" style="padding: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <span>${wh.name}</span>
+                <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
+                        onclick="deleteWarehouse('${wh.id}')">Sil</button>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function addWarehouse() {
+    const input = document.getElementById('new-warehouse-name');
+    const name = input.value.trim();
+    if (!name) return;
+
+    try {
+        await db.addWarehouse(name);
+        input.value = '';
+        Toast.show('Depo eklendi', 'success');
+        loadWarehousesSettings();
+    } catch (e) {
+        Toast.show('Hata: ' + e.message, 'error');
+    }
+}
+
+async function deleteWarehouse(id) {
+    if (!confirm('Depoyu silmek istediğinize emin misiniz?')) return;
+    try {
+        await db.deleteWarehouse(id);
+        Toast.show('Depo silindi', 'success');
+        loadWarehousesSettings();
+    } catch (e) {
+        Toast.show('Hata: ' + e.message, 'error');
+    }
+}
+
+// ... existing code ...
+
+// ==========================================
 // Initialize on DOM Ready
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
+
+    // Add warehouse listeners
+    const addWhBtn = document.getElementById('add-warehouse-btn');
+    if (addWhBtn) {
+        addWhBtn.addEventListener('click', addWarehouse);
+    }
+
+    // Refresh warehouses when entering settings
+    document.querySelector('.nav-item[data-page="settings"]').addEventListener('click', loadWarehousesSettings);
 });
 
 // Handle install prompt for PWA

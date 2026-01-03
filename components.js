@@ -180,8 +180,11 @@ class Modal {
 function createProductCard(product) {
     // Determine stock status based on critical level
     const criticalLevel = product.criticalStock || 5;
-    const stockStatus = product.stock > criticalLevel ? 'success' :
-        product.stock > 0 ? 'warning' : 'danger';
+    // Support both new TotalStock and legacy Stock field
+    const currentStock = product.totalStock !== undefined ? product.totalStock : (product.stock || 0);
+
+    const stockStatus = currentStock > criticalLevel ? 'success' :
+        currentStock > 0 ? 'warning' : 'danger';
 
     // Status badges
     const statusBadges = {
@@ -215,15 +218,10 @@ function createProductCard(product) {
             
             <div style="display: flex; justify-content: space-between; align-items: end;">
                 <div>
-                    <span style="font-size: 0.75rem; color: var(--text-tertiary); display: block; margin-bottom: 0.25rem;">STOK ADEDİ</span>
-                    <span style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">${product.stock}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-tertiary); display: block; margin-bottom: 0.25rem;">TOPLAM STOK</span>
+                    <span style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">${currentStock}</span>
                 </div>
-                <div style="text-align: right;">
-                    <span style="font-size: 0.75rem; color: var(--text-tertiary); display: block; margin-bottom: 0.25rem;">DEPO</span>
-                    <span style="font-size: 0.875rem; color: var(--text-secondary);">
-                        ${product.warehouse === 'warehouse1' ? 'Depo 1' : 'Depo 2'}
-                    </span>
-                </div>
+                <!-- Warehouse removed from card summary as products are now multi-warehouse -->
             </div>
             <button class="btn btn-danger" style="width: 100%; margin-top: 1rem; padding: 0.5rem;" 
                     onclick="event.stopPropagation(); deleteProduct('${product.id}')">
@@ -319,18 +317,6 @@ function showProductForm(product = null) {
                        value="${isEdit ? (product.criticalStock || 5) : 5}">
                 <small style="color: var(--text-secondary); font-size: 0.75rem;">Stok bu sayının altına düşerse uyarı verilir.</small>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Depo *</label>
-                <select class="form-select" id="product-warehouse" required>
-                    <option value="warehouse1" ${isEdit && product.warehouse === 'warehouse1' ? 'selected' : ''}>
-                        🏢 Depo 1
-                    </option>
-                    <option value="warehouse2" ${isEdit && product.warehouse === 'warehouse2' ? 'selected' : ''}>
-                        🏭 Depo 2
-                    </option>
-                </select>
-            </div>
         </form>
     `;
 
@@ -360,6 +346,13 @@ function showTransactionForm(productId = null) {
                     <option value="exit">📤 Çıkış</option>
                 </select>
             </div>
+
+            <div class="form-group">
+                <label class="form-label">Depo Yeri *</label>
+                <select class="form-select" id="transaction-warehouse" required>
+                    <option value="">Depo Seçin</option>
+                </select>
+            </div>
             
             <div class="form-group">
                 <label class="form-label">Adet *</label>
@@ -368,7 +361,7 @@ function showTransactionForm(productId = null) {
             </div>
             
             <div class="form-group">
-                <label class="form-label">Birim Fiyat (€) *</label>
+                <label class="form-label" id="price-label">Alış Fiyatı (€) *</label>
                 <input type="number" class="form-input" id="transaction-price" 
                        min="0" step="0.01" required>
             </div>
@@ -403,7 +396,8 @@ function showTransactionForm(productId = null) {
         { text: 'Kaydet', class: 'btn-primary', onclick: 'saveTransaction()' }
     ]);
 
-    // Load products if needed
+    // Load data
+    loadWarehousesToSelect();
     if (!productId) {
         loadProductsToSelect();
     }
@@ -413,7 +407,10 @@ function showTransactionForm(productId = null) {
 function toggleExitFields() {
     const type = document.getElementById('transaction-type').value;
     const exitFields = document.getElementById('exit-fields');
+    const priceLabel = document.getElementById('price-label');
+
     exitFields.style.display = type === 'exit' ? 'block' : 'none';
+    priceLabel.textContent = type === 'exit' ? 'Satış Fiyatı (€) *' : 'Alış Fiyatı (€) *';
 }
 
 // Load products into select dropdown
@@ -424,7 +421,19 @@ async function loadProductsToSelect() {
     products.forEach(product => {
         const option = document.createElement('option');
         option.value = product.id;
-        option.textContent = `${product.name} (${product.warehouse === 'warehouse1' ? 'Depo 1' : 'Depo 2'})`;
+        option.textContent = product.name; // Removed warehouse from name
+        select.appendChild(option);
+    });
+}
+
+async function loadWarehousesToSelect() {
+    const warehouses = await db.getWarehouses();
+    const select = document.getElementById('transaction-warehouse');
+
+    warehouses.forEach(wh => {
+        const option = document.createElement('option');
+        option.value = wh.id;
+        option.textContent = wh.name;
         select.appendChild(option);
     });
 }
