@@ -222,17 +222,19 @@ class DatabaseManager {
     }
 
     async deleteTransaction(transactionId) {
-        // Get transaction first to know quantity
         const transaction = await this.get('transactions', transactionId);
         if (!transaction) return;
 
-        // Reverse stock
-        const reverseStockChange = transaction.type === 'entry' ?
-            -transaction.quantity : transaction.quantity;
+        // Try to reverse stock, but don't block deletion if product is gone
+        try {
+            const reverseStockChange = transaction.type === 'entry' ?
+                -transaction.quantity : transaction.quantity;
 
-        await this.updateProductStock(transaction.productId, reverseStockChange, transaction.warehouseId);
+            await this.updateProductStock(transaction.productId, reverseStockChange, transaction.warehouseId);
+        } catch (e) {
+            console.warn('Product not found, skipping stock reversal:', e);
+        }
 
-        // Delete record
         await this.delete('transactions', transactionId);
     }
 

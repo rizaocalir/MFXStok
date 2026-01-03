@@ -5,23 +5,100 @@
 class Reports {
     static async updateDashboardStats() {
         try {
-            const stats = await db.getStatistics();
+            const products = await db.getAll('products');
+            const transactions = await db.getAll('transactions');
 
-            // Update stat cards
-            document.getElementById('total-products').textContent = stats.totalProducts;
-            document.getElementById('warehouse1-stock').textContent = stats.warehouse1Stock;
-            document.getElementById('warehouse2-stock').textContent = stats.warehouse2Stock;
-            document.getElementById('pending-payments').textContent =
-                stats.pendingPayments.toLocaleString('tr-TR') + '€';
+            // 1. Calculate Total Stock Value (Maliyet Değeri)
+            const totalStockValue = products.reduce((sum, p) => {
+                const stock = p.totalStock !== undefined ? p.totalStock : (p.stock || 0);
+                const cost = p.costPrice || 0;
+                return sum + (stock * cost);
+            }, 0);
+
+            // 2. Calculate Pending Payments (Alacaklar) - Only from Exits
+            const pendingPayments = transactions
+                .filter(t => t.type === 'exit' && (t.paymentStatus === 'pending' || t.paymentStatus === 'partial'))
+                .reduce((sum, t) => {
+                    // For now assuming full amount is pending if status is pending
+                    // If partial, ideally we need 'paidAmount' field, but for now we can't know. 
+                    // Let's assume full amount for pending, and maybe 50% for partial if no data, 
+                    // or just sum totalAmount for simplicity until schema update.
+                    return sum + t.totalAmount;
+                }, 0);
+
+            // Warehouse stocks calculation
+            const warehouses = await db.getWarehouses();
+            const warehouseStats = {};
+
+            // Initialize stats for each warehouse
+            warehouses.forEach(w => {
+                warehouseStats[w.id] = { name: w.name, count: 0, value: 0 };
+            });
+
+            // Calculate totals
+            products.forEach(p => {
+                const cost = p.costPrice || 0;
+                if (p.stock && typeof p.stock === 'object') {
+                    Object.entries(p.stock).forEach(([whId, qty]) => {
+                        if (warehouseStats[whId]) {
+                            warehouseStats[whId].count += qty;
+                            warehouseStats[whId].value += (qty * cost);
+                        }
+                    });
+                }
+            });
+
+            // Generate HTML for warehouse cards
+            const warehouseCardsHTML = warehouses.map(w => {
+                const stat = warehouseStats[w.id];
+                return `
+                    <div class="stat-card">
+                        <div class="stat-icon">🏭</div>
+                        <div class="stat-info">
+                            <div class="stat-label">${w.name}</div>
+                            <div class="stat-value">${stat.count} <span style="font-size: 0.8rem; color: var(--text-secondary);">(${stat.value.toLocaleString('tr-TR')}€)</span></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update UI - Inject dynamic cards into a container
+            // We need to change the HTML structure slightly to accommodate dynamic cards
+            const statsGrid = document.querySelector('.stats-grid');
+            if (statsGrid) {
+                // Keep the first static card (Total Products) and append dynamic ones
+                // OR rewrite the whole grid
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Toplam Ürün</div>
+                            <div class="stat-value" id="total-products">${products.length}</div>
+                        </div>
+                    </div>
+                    ${warehouseCardsHTML}
+                    <div class="stat-card" title="Toplam Stok Maliyeti: ${totalStockValue.toLocaleString('tr-TR')}€">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Bekleyen Ödeme</div>
+                            <div class="stat-value" id="pending-payments">${pendingPayments.toLocaleString('tr-TR') + '€'}</div>
+                        </div>
+                    </div>
+                `;
+            }
 
             // Update sales stats on reports page
             if (document.getElementById('today-sales')) {
-                document.getElementById('today-sales').textContent =
-                    stats.todaySales.toLocaleString('tr-TR') + '€';
-                document.getElementById('week-sales').textContent =
-                    stats.weekSales.toLocaleString('tr-TR') + '€';
-                document.getElementById('month-sales').textContent =
-                    stats.monthSales.toLocaleString('tr-TR') + '€';
+                // ... (existing sales logic is fine if it uses 'stats' object, but I should recalculate here or use the method)
+                // Re-implementing sales calc locally to be safe or call generateSalesReport
+                const salesReport = await this.generateSalesReport('today');
+                document.getElementById('today-sales').textContent = salesReport.totalSales.toLocaleString('tr-TR') + '€';
+
+                const weekReport = await this.generateSalesReport('week');
+                document.getElementById('week-sales').textContent = weekReport.totalSales.toLocaleString('tr-TR') + '€';
+
+                const monthReport = await this.generateSalesReport('month');
+                document.getElementById('month-sales').textContent = monthReport.totalSales.toLocaleString('tr-TR') + '€';
             }
 
         } catch (error) {

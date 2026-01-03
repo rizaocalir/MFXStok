@@ -17,6 +17,7 @@ async function initApp() {
             console.log('Database initialized');
             db.monitorConnection(); // Start monitoring connection
             // Load initial data
+            await loadWarehouseFilter(); // Load filter options
             await loadDashboard();
         }
 
@@ -297,6 +298,9 @@ async function viewProduct(productId) {
                 }).join('');
         }
 
+        const totalStock = product.totalStock !== undefined ? product.totalStock : (product.stock || 0);
+        const stockValue = (totalStock * (product.costPrice || 0)).toLocaleString('tr-TR');
+
         const content = `
             <div style="margin-bottom: 1.5rem;">
                 <h3 style="margin: 0 0 0.5rem 0;">${product.name}</h3>
@@ -304,11 +308,20 @@ async function viewProduct(productId) {
                 ${stockBreakdown ? `<div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">${stockBreakdown}</div>` : ''}
             </div>
             
-            <div class="stat-card" style="margin-bottom: 1.5rem;">
-                <div class="stat-icon">📦</div>
-                <div class="stat-info">
-                    <div class="stat-label">Toplam Stok</div>
-                    <div class="stat-value">${product.totalStock || product.stock || 0}</div>
+            <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Toplam Stok</div>
+                        <div class="stat-value">${totalStock}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Stok Değeri (Maliyet)</div>
+                        <div class="stat-value" style="font-size: 1.25rem;">${stockValue}€</div>
+                    </div>
                 </div>
             </div>
             
@@ -326,6 +339,7 @@ async function viewProduct(productId) {
             content,
             [
                 { text: 'Kapat', class: 'btn-secondary', onclick: 'Modal.close()' },
+                // FIX: Ensure ID is quoted properly for string IDs
                 { text: 'Hareket Ekle', class: 'btn-primary', onclick: `Modal.close(); showTransactionForm('${productId}')` }
             ]
         );
@@ -340,6 +354,26 @@ async function viewProduct(productId) {
 // Transaction Functions
 // ==========================================
 
+// Helper to populate warehouse filter
+async function loadWarehouseFilter() {
+    const filter = document.getElementById('warehouse-filter');
+    if (!filter) return;
+
+    try {
+        const warehouses = await db.getWarehouses();
+        // Keep "All" option and append regex-cleared list
+        filter.innerHTML = '<option value="all">Tüm Depolar</option>';
+        warehouses.forEach(wh => {
+            const option = document.createElement('option');
+            option.value = wh.id;
+            option.textContent = wh.name;
+            filter.appendChild(option);
+        });
+    } catch (e) {
+        console.error('Filter load error:', e);
+    }
+}
+
 async function loadTransactions() {
     try {
         let transactions = await db.getAll('transactions');
@@ -353,7 +387,8 @@ async function loadTransactions() {
         }
 
         if (warehouseFilter !== 'all') {
-            transactions = transactions.filter(t => t.warehouse === warehouseFilter);
+            // Updated to check new warehouseId field or legacy warehouse string
+            transactions = transactions.filter(t => t.warehouseId === warehouseFilter || t.warehouse === warehouseFilter);
         }
 
         // Sort by date (newest first)
@@ -503,15 +538,20 @@ async function loadWarehousesSettings() {
 async function addWarehouse() {
     const input = document.getElementById('new-warehouse-name');
     const name = input.value.trim();
-    if (!name) return;
+    if (!name) {
+        Toast.show('Lütfen bir depo adı girin', 'warning');
+        return;
+    }
 
     try {
         await db.addWarehouse(name);
         input.value = '';
-        Toast.show('Depo eklendi', 'success');
-        loadWarehousesSettings();
+        Toast.show('Yeni depo eklendi ✅', 'success');
+        // Await this to ensure list updates before user sees toast (or almost same time)
+        await loadWarehousesSettings();
     } catch (e) {
-        Toast.show('Hata: ' + e.message, 'error');
+        console.error('Add warehouse error:', e);
+        Toast.show('Depo eklenirken hata oluştu: ' + e.message, 'error');
     }
 }
 

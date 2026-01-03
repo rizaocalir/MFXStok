@@ -223,10 +223,16 @@ function createProductCard(product) {
                 </div>
                 <!-- Warehouse removed from card summary as products are now multi-warehouse -->
             </div>
-            <button class="btn btn-danger" style="width: 100%; margin-top: 1rem; padding: 0.5rem;" 
-                    onclick="event.stopPropagation(); deleteProduct('${product.id}')">
-                🗑️ Ürünü Sil
-            </button>
+            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.8rem;" 
+                        onclick="event.stopPropagation(); showTransactionForm('${product.id}')">
+                    ➕ Hareket
+                </button>
+                <button class="btn btn-danger" style="flex: 1; padding: 0.5rem; font-size: 0.8rem;" 
+                        onclick="event.stopPropagation(); deleteProduct('${product.id}')">
+                    🗑️ Sil
+                </button>
+            </div>
         </div>
     `;
 }
@@ -274,7 +280,7 @@ function createTransactionItem(transaction) {
                     ${transaction.quantity} adet
                 </div>
                 <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; margin-top: 0.5rem; font-size: 0.75rem;" 
-                        onclick="deleteTransaction(${transaction.id})">
+                        onclick="deleteTransaction('${transaction.id}')">
                     🗑️ Sil
                 </button>
             </div>
